@@ -3,6 +3,8 @@
 namespace Commadore\GraphQL;
 
 use Commadore\GraphQL\Interfaces\QueryInterface;
+use GraphQL\Language\Printer;
+use GraphQL\Language\Parser;
 
 abstract class AbstractQuery implements QueryInterface
 {
@@ -64,9 +66,7 @@ abstract class AbstractQuery implements QueryInterface
     public function __construct($type = null, array $args = [], array $fields = [])
     {
         $this->type = $type;
-
         $this->arguments($args);
-
         $this->fields($fields);
     }
 
@@ -316,7 +316,7 @@ abstract class AbstractQuery implements QueryInterface
                 $this->printFields($this->fields, $this->skipIf, $this->includeIf));
         }
 
-        $query = \GraphQL\Language\Printer::doPrint(\GraphQL\Language\Parser::parse((string) $query));
+        $query = Printer::doPrint(Parser::parse((string) $query));
 
         $query = str_replace(static::$operationNamePlaceholder, $this->getPrefix().sha1($query), $query);
 
@@ -351,7 +351,7 @@ abstract class AbstractQuery implements QueryInterface
     }
 
 
-    private function printType($value): string
+    private function printType($value): ?string
     {
         if (\is_string($value)) {
             return $value;
@@ -362,5 +362,7 @@ abstract class AbstractQuery implements QueryInterface
                 return sprintf('%s: %s', $alias, $type);
             }
         }
+
+        return null;
     }
 }

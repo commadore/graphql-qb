@@ -13,6 +13,7 @@ class QueryTest extends TestCase
      */
     public function testAddFields()
     {
+
         $query1 = new Query('article', [
             'id' => 999,
             'title' => 'Hello World',
