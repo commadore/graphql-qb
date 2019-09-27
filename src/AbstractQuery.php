@@ -256,18 +256,11 @@ abstract class AbstractQuery implements QueryInterface
 
             if ($field instanceof self) {
                 $field->isRootQuery = false;
-
-                if (array_key_exists($fieldAlias, $skipIf)) {
-                    $directive = sprintf('@skip(if: %s)', $skipIf[$fieldAlias]);
-                } elseif (array_key_exists($fieldAlias, $includeIf)) {
-                    $directive = sprintf('@include(if: %s)', $includeIf[$fieldAlias]);
+                if(empty($field->type))
+                {
+                    $field->type = $fieldAlias;
                 }
-
-                if (null !== $field->type) {
-                    $fieldAlias = sprintf('%s: %s', $fieldAlias, $field->type);
-                }
-
-                $fields[] = sprintf('%s %s { %s }', $fieldAlias, $directive, static::printFields($field->fields));
+                $fields[] = sprintf('%s: %s', $fieldAlias, $field->__toString());
             }
         }
 
@@ -304,22 +297,24 @@ abstract class AbstractQuery implements QueryInterface
 
     public function __toString()
     {
+
         if ($this->isRootQuery) {
             $query = sprintf('%s { %s %s { %s } } %s',
                 $this->printQuery($this->operationName, $this->variables),
                 $this->printType($this->type), $this->printArgs($this->args),
                 $this->printFields($this->fields, $this->skipIf, $this->includeIf),
                 $this->printFragments($this->fragments));
+            $query = Printer::doPrint(Parser::parse((string) $query));
+
+            $query = str_replace(static::$operationNamePlaceholder, $this->getPrefix().sha1($query), $query);
+
         } else {
-            $query = sprintf('%s { %s }',
+            $query = sprintf('%s %s { %s } %s',
                 $this->printType($this->type),
-                $this->printFields($this->fields, $this->skipIf, $this->includeIf));
+                $this->printArgs($this->args),
+                $this->printFields($this->fields),
+                $this->printFragments($this->fragments));
         }
-
-        $query = Printer::doPrint(Parser::parse((string) $query));
-
-        $query = str_replace(static::$operationNamePlaceholder, $this->getPrefix().sha1($query), $query);
-
         return $query;
     }
 
