@@ -246,7 +246,7 @@ class QueryTest extends TestCase
                 'body',
                 '...imageFragment',
             ]);
-        $query->addFragment(new Fragment('imageFragment', 'image', [
+        $operation->addFragment(new Fragment('imageFragment', 'image', [
                 'height',
                 'width',
                 'filename',

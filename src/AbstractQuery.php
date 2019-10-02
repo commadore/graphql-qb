@@ -246,40 +246,13 @@ abstract class AbstractQuery implements QueryInterface
 
     public function __toString()
     {
-            $query = sprintf('%s %s { %s } %s',
+            $query = sprintf('%s %s { %s }',
                 $this->printType($this->type),
                 $this->printArgs($this->args),
-                $this->printFields($this->fields),
-                $this->printFragments($this->fragments));
+                $this->printFields($this->fields)
+            );
 
         return $query;
-    }
-
-    /**
-     * @param Fragment $fragment
-     *
-     * @return $this
-     */
-    public function addFragment(Fragment $fragment): QueryInterface
-    {
-        $this->fragments[$fragment->name] = $fragment;
-
-        return $this;
-    }
-
-    /**
-     * @param $value
-     *
-     * @return string
-     */
-    private function printFragments($value)
-    {
-        $fragments = '';
-        foreach ($value as $fragment) {
-            $fragments .= (string) $fragment;
-        }
-
-        return $fragments;
     }
 
 

@@ -5,6 +5,7 @@ namespace Commadore\GraphQL;
 use Commadore\GraphQL\Exceptions\InvalidTypeException;
 use Commadore\GraphQL\Interfaces\FieldQueryInterface;
 use Commadore\GraphQL\Interfaces\OperationInterface;
+use Commadore\GraphQL\Interfaces\QueryInterface;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Printer;
 
@@ -14,6 +15,7 @@ class Operation implements OperationInterface
     private $operationType;
     private $fields;
     private $variables;
+    private $fragments;
 
 
     /**
@@ -76,12 +78,40 @@ class Operation implements OperationInterface
 
     public function __toString()
     {
-        $query = sprintf('%s { %s }',
+        $query = sprintf('%s { %s } %s',
             $this->printQuery($this->operationName, $this->variables),
-            $this->printFields($this->fields));
+            $this->printFields($this->fields),
+            $this->printFragments($this->fragments));
         $query = Printer::doPrint(Parser::parse((string) $query));
 
         return $query;
+    }
+
+    /**
+     * @param Fragment $fragment
+     *
+     * @return $this
+     */
+    public function addFragment(Fragment $fragment): OperationInterface
+    {
+        $this->fragments[$fragment->name] = $fragment;
+
+        return $this;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return string
+     */
+    private function printFragments($value)
+    {
+        $fragments = '';
+        foreach ($value as $fragment) {
+            $fragments .= (string) $fragment;
+        }
+
+        return $fragments;
     }
 
     /**

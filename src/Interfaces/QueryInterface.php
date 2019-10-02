@@ -13,6 +13,4 @@ interface QueryInterface extends FieldQueryInterface
     public function skipIf(array $values = []): QueryInterface;
 
     public function includeIf(array $values = []): QueryInterface;
-
-    public function addFragment(Fragment $fragment): QueryInterface;
 }
