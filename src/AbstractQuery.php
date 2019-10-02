@@ -2,14 +2,13 @@
 
 namespace Commadore\GraphQL;
 
+use Commadore\GraphQL\Interfaces\FieldQueryInterface;
 use Commadore\GraphQL\Interfaces\QueryInterface;
-use GraphQL\Language\Printer;
 use GraphQL\Language\Parser;
+use GraphQL\Language\Printer;
 
 abstract class AbstractQuery implements QueryInterface
 {
-    public static $operationNamePlaceholder = '_operationNamePlaceholder_';
-
     abstract function getKeyword(): string;
     abstract function getPrefix(): string;
 
@@ -26,7 +25,7 @@ abstract class AbstractQuery implements QueryInterface
     /**
      * @var bool
      */
-    public $isRootQuery = true;
+    public $isOperation = true;
 
     /**
      * @var array
@@ -82,58 +81,6 @@ abstract class AbstractQuery implements QueryInterface
         return $this;
     }
 
-    /**
-     * @param $operationName
-     * @param $variables
-     *
-     * @return string
-     */
-    private function printQuery($operationName, $variables): string
-    {
-        if (null === $operationName) {
-            if (\count($variables)) {
-                $operationName = static::$operationNamePlaceholder;
-            } else {
-                return '';
-            }
-        }
-
-        return sprintf('%s %s %s', $this->getKeyword(), $operationName, $this->printVariables($variables));
-    }
-
-    /**
-     * @param array $variables
-     *
-     * @return self
-     */
-    public function variables(array $variables = []): QueryInterface
-    {
-        foreach ($variables as $variableName => $variableType) {
-            $this->variables[(string) $variableName] = (string) $variableType;
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param array $value
-     *
-     * @return string
-     */
-    private function printVariables(array $value): string
-    {
-        if (!\count($value)) {
-            return '';
-        }
-
-        $variables = [];
-
-        foreach ($value as $variableName => $variableType) {
-            $variables[] = sprintf('%s: %s', $variableName, $variableType);
-        }
-
-        return sprintf('(%s)', implode(', ', $variables));
-    }
 
     /**
      * @param array $args
@@ -184,7 +131,7 @@ abstract class AbstractQuery implements QueryInterface
      *
      * @return self
      */
-    public function fields(array $fields = []): QueryInterface
+    public function fields(array $fields = []): FieldQueryInterface
     {
         foreach ($fields as $fieldAlias => $field) {
             if (\is_string($field)) {
@@ -196,7 +143,7 @@ abstract class AbstractQuery implements QueryInterface
             }
 
             if ($field instanceof self) {
-                $field->isRootQuery = false;
+                $field->isOperation = false;
                 $this->fields[$fieldAlias] = $field;
             }
         }
@@ -227,8 +174,10 @@ abstract class AbstractQuery implements QueryInterface
      *
      * @return string
      */
-    private function printFields(array $value, array $skipIf = [], array $includeIf = []): string
+    private function printFields(array $value): string
     {
+        $skipIf = $this->skipIf;
+        $includeIf = $this->includeIf;
         $fields = [];
 
         foreach ($value as $fieldAlias => $field) {
@@ -255,7 +204,7 @@ abstract class AbstractQuery implements QueryInterface
             }
 
             if ($field instanceof self) {
-                $field->isRootQuery = false;
+                $field->isOperation = false;
                 if(empty($field->type))
                 {
                     $field->type = $fieldAlias;
@@ -297,24 +246,12 @@ abstract class AbstractQuery implements QueryInterface
 
     public function __toString()
     {
-
-        if ($this->isRootQuery) {
-            $query = sprintf('%s { %s %s { %s } } %s',
-                $this->printQuery($this->operationName, $this->variables),
-                $this->printType($this->type), $this->printArgs($this->args),
-                $this->printFields($this->fields, $this->skipIf, $this->includeIf),
-                $this->printFragments($this->fragments));
-            $query = Printer::doPrint(Parser::parse((string) $query));
-
-            $query = str_replace(static::$operationNamePlaceholder, $this->getPrefix().sha1($query), $query);
-
-        } else {
             $query = sprintf('%s %s { %s } %s',
                 $this->printType($this->type),
                 $this->printArgs($this->args),
                 $this->printFields($this->fields),
                 $this->printFragments($this->fragments));
-        }
+
         return $query;
     }
 
