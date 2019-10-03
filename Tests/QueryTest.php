@@ -283,4 +283,40 @@ fragment imageFragment on image {
 ';
         $this->assertEquals($expected, (string) $operation);
     }
+
+    public function testQueryWithoutAliases()
+    {
+        $operation = new Operation(
+            Query::KEYWORD,
+            'test',
+            [],
+            [
+                'myAlias' => new Query(
+                    'myAliasedField',
+                    [],
+                    [
+                        'subfieldA'
+                    ]
+                ),
+                new Query(
+                    'unaliasedField',
+                    [],
+                    [
+                        'nosuchsubfield'
+                    ]
+                )
+            ]
+        );
+        $expected = 'query test {
+  myAlias: myAliasedField {
+    subfieldA
+  }
+  unaliasedField {
+    nosuchsubfield
+  }
+}
+';
+       $this->assertEquals($expected, (string) $operation);
+    }
+
 }
