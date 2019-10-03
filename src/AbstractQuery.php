@@ -212,7 +212,11 @@ abstract class AbstractQuery implements QueryInterface
                 {
                     $field->type = $fieldAlias;
                 }
-                $fields[] = sprintf('%s: %s', $fieldAlias, $field->__toString());
+                if(is_string($fieldAlias)) {
+                    $fields[] = sprintf('%s: %s', $fieldAlias, $field->__toString());
+                } else {
+                    $fields[] = sprintf('%s', $field->__toString());
+                }
             }
         }
 
