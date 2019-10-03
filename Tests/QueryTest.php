@@ -26,7 +26,7 @@ class QueryTest extends TestCase
         ]);
         $operation->fields(['article' => $query1]);
 
-        $query2 = (new Operation(Query::KEYWORD, 'article', [],
+        $operation2 = (new Operation(Query::KEYWORD, 'article', [],
             ['article' => (new Query())
             ->arguments([
                 'id' => 999,
@@ -51,7 +51,7 @@ class QueryTest extends TestCase
 }
 ';
         $this->assertEquals($expected, (string) $operation);
-        $this->assertEquals($expected, (string) $query2);
+        $this->assertEquals($expected, (string) $operation2);
     }
 
     /**

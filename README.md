@@ -7,8 +7,7 @@ A php GraphQL Query Builder. Nice API. Readable queries. Examples in Unit Tests.
 Includes:
 - Query / Mutation / Fragment
 - Sorted Fields
-- Custom Operation name
-- A predictable operation name is generated if you don't specify one and add variables
+- Mandatory Operation Object
 - Add variables
 - Add arguments
 - Directives (Include / Skip)
@@ -23,57 +22,31 @@ TODO:
 
 include_once 'vendor/autoload.php';
 
+use Commadore\GraphQL\Operation;
 use Commadore\GraphQL\Query;
 
-$query = new Query('article');
-$query
-    ->variables([
-        '$withTags' => 'Boolean = false',
-    ])
-    ->fields([
-        'id',
-        'title',
-        'body',
-        'myLanguageAlias' => 'language',
-        'tags' => (new Query)->fields([
+        $operation = new Operation(Query::KEYWORD, 'article');
+        $query1 = new Query('article', [
+            'id' => 999,
+            'title' => 'Hello World',
+            'note' => 3.5,
+        ], [
             'id',
-            'tagLabel' => 'label',
-            'language',
-            'taxonomy' => (new Query)->fields([
-                'id',
-                'label',
-                'language'
-            ]),
-        ])
-    ])
-    ->includeIf([
-        'tags' => '$withTags'
-    ])
-;
+            'title',
+            'body',
+        ]);
+        $operation->fields(['article' => $query1]);
 
-echo $query;
+        echo $operation;
+
 ```
 
-
 ```graphql
-query query_d084b5fa08a495bb76e87b51cb5e2b33fc87039a($withTags: Boolean = false) {
-  article {
+query article {
+  article: article(id: 999, note: 3.5, title: "Hello World") {
     body
     id
-    myLanguageAlias: language
-    tags @include(if: $withTags) {
-      id
-      language
-      tagLabel: label
-      taxonomy {
-        id
-        label
-        language
-      }
-    }
     title
   }
 }
-
 ```
-

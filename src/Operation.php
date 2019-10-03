@@ -5,9 +5,9 @@ namespace Commadore\GraphQL;
 use Commadore\GraphQL\Exceptions\InvalidTypeException;
 use Commadore\GraphQL\Interfaces\FieldQueryInterface;
 use Commadore\GraphQL\Interfaces\OperationInterface;
-use Commadore\GraphQL\Interfaces\QueryInterface;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Printer;
+use function is_string;
 
 class Operation implements OperationInterface
 {
@@ -43,8 +43,8 @@ class Operation implements OperationInterface
     public function fields(array $fields = []): FieldQueryInterface
     {
         foreach ($fields as $fieldAlias => $field) {
-            if (\is_string($field)) {
-                if (\is_string($fieldAlias)) {
+            if (is_string($field)) {
+                if (is_string($fieldAlias)) {
                     $this->fields[$fieldAlias] = $field;
                 } else {
                     $this->fields[$field] = $field;
@@ -104,8 +104,12 @@ class Operation implements OperationInterface
      *
      * @return string
      */
-    private function printFragments($value)
+    private function printFragments($value) : string
     {
+        if (empty($value))
+        {
+            return '';
+        }
         $fragments = '';
         foreach ($value as $fragment) {
             $fragments .= (string) $fragment;
@@ -145,7 +149,7 @@ class Operation implements OperationInterface
      */
     private function printVariables(array $value): string
     {
-        if (!\count($value)) {
+        if (!count($value)) {
             return '';
         }
 
@@ -172,7 +176,7 @@ class Operation implements OperationInterface
         foreach ($value as $fieldAlias => $field) {
             $directive = '';
 
-            if (\is_string($field)) {
+            if (is_string($field)) {
                 if ($fieldAlias !== $field) {
                     if (array_key_exists($fieldAlias, $skipIf)) {
                         $directive = sprintf('@skip(if: %s)', $skipIf[$fieldAlias]);

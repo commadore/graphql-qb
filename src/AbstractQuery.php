@@ -6,6 +6,9 @@ use Commadore\GraphQL\Interfaces\FieldQueryInterface;
 use Commadore\GraphQL\Interfaces\QueryInterface;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Printer;
+use function is_bool;
+use function is_float;
+use function is_string;
 
 abstract class AbstractQuery implements QueryInterface
 {
@@ -112,11 +115,11 @@ abstract class AbstractQuery implements QueryInterface
 
         $args = [];
         foreach ($value as $argName => $argValue) {
-            if (\is_string($argValue) && '$' !== $argValue[0]) {
+            if (is_string($argValue) && '$' !== $argValue[0]) {
                 $argValue = sprintf('"%s"', $argValue);
             }
 
-            if (\is_bool($argValue) || \is_float($argValue)) {
+            if (is_bool($argValue) || is_float($argValue)) {
                 $argValue = var_export($argValue, true);
             }
 
@@ -134,8 +137,8 @@ abstract class AbstractQuery implements QueryInterface
     public function fields(array $fields = []): FieldQueryInterface
     {
         foreach ($fields as $fieldAlias => $field) {
-            if (\is_string($field)) {
-                if (\is_string($fieldAlias)) {
+            if (is_string($field)) {
+                if (is_string($fieldAlias)) {
                     $this->fields[$fieldAlias] = $field;
                 } else {
                     $this->fields[$field] = $field;
@@ -183,7 +186,7 @@ abstract class AbstractQuery implements QueryInterface
         foreach ($value as $fieldAlias => $field) {
             $directive = '';
 
-            if (\is_string($field)) {
+            if (is_string($field)) {
                 if ($fieldAlias !== $field) {
                     if (array_key_exists($fieldAlias, $skipIf)) {
                         $directive = sprintf('@skip(if: %s)', $skipIf[$fieldAlias]);
@@ -258,7 +261,7 @@ abstract class AbstractQuery implements QueryInterface
 
     private function printType($value): ?string
     {
-        if (\is_string($value)) {
+        if (is_string($value)) {
             return $value;
         }
 

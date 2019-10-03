@@ -2,6 +2,9 @@
 
 namespace Commadore\GraphQL;
 
+use GraphQL\Language\Parser;
+use GraphQL\Language\Printer;
+
 final class Fragment
 {
     /**
@@ -62,6 +65,8 @@ final class Fragment
     public function __toString()
     {
         $query = sprintf('fragment %s on %s { %s }', $this->name, $this->type, static::printFields($this->fields));
+
+        $query = Printer::doPrint(Parser::parse((string) $query));
 
         return $query;
     }
