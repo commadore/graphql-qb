@@ -3,31 +3,39 @@
 namespace Tests\Commadore\GraphQL;
 
 use Commadore\GraphQL\Mutation;
+use Commadore\GraphQL\Operation;
 use PHPUnit\Framework\TestCase;
 
 class MutationTest extends TestCase
 {
     public function testMutation()
     {
-        $mutation = new Mutation('createReview');
+        $mutation = new Operation(Mutation::KEYWORD, 'CreateReviewForEpisode');
         $mutation
-            ->operationName('CreateReviewForEpisode')
-            ->variables([
-                '$ep' => 'Episode!',
-                '$review' => 'ReviewInput!',
-            ])
-            ->arguments([
-                'episode' => '$ep',
-                'review' => '$review',
-            ])
-            ->fields([
-                'stars',
-                'commentary',
+            ->variables(
+                [
+                    '$ep' => 'Episode!',
+                    '$review' => 'ReviewInput!',
+                ]
+            )
+            ->fields(['createReview' => (new Mutation())
+                ->arguments(
+                    [
+                        'episode' => '$ep',
+                        'review' => '$review',
+                    ]
+                )
+                ->fields(
+                    [
+                        'stars',
+                        'commentary',
+                    ]
+                )
             ]);
 
         $expected =
             'mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
-  createReview(episode: $ep, review: $review) {
+  createReview: createReview(episode: $ep, review: $review) {
     commentary
     stars
   }

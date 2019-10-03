@@ -3,6 +3,7 @@
 namespace Tests\Commadore\GraphQL;
 
 use Commadore\GraphQL\Fragment;
+use Commadore\GraphQL\Operation;
 use Commadore\GraphQL\Query;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +14,7 @@ class QueryTest extends TestCase
      */
     public function testAddFields()
     {
-
+        $operation = new Operation(Query::KEYWORD, 'article');
         $query1 = new Query('article', [
             'id' => 999,
             'title' => 'Hello World',
@@ -23,8 +24,10 @@ class QueryTest extends TestCase
             'title',
             'body',
         ]);
+        $operation->fields(['article' => $query1]);
 
-        $query2 = (new Query('article'))
+        $operation2 = (new Operation(Query::KEYWORD, 'article', [],
+            ['article' => (new Query())
             ->arguments([
                 'id' => 999,
                 'title' => 'Hello World',
@@ -34,19 +37,21 @@ class QueryTest extends TestCase
                 'id',
                 'title',
                 'body',
-            ]);
+            ])
+        ]
+    ));
 
         $expected =
-            '{
-  article(id: 999, note: 3.5, title: "Hello World") {
+            'query article {
+  article: article(id: 999, note: 3.5, title: "Hello World") {
     body
     id
     title
   }
 }
 ';
-        $this->assertEquals($expected, (string) $query1);
-        $this->assertEquals($expected, (string) $query2);
+        $this->assertEquals($expected, (string) $operation);
+        $this->assertEquals($expected, (string) $operation2);
     }
 
     /**
@@ -54,6 +59,7 @@ class QueryTest extends TestCase
      */
     public function testSortFields()
     {
+        $operation = new Operation(Query::KEYWORD, 'article');
         $query1 = (new Query('article'))
             ->arguments([
                 'title' => 'Hello World',
@@ -65,7 +71,7 @@ class QueryTest extends TestCase
                 'title',
                 'body',
             ]);
-
+        $operation->fields(['article' => $query1]);
         $query2 = (new Query('article'))
             ->arguments([
                 'id' => 999,
@@ -86,22 +92,23 @@ class QueryTest extends TestCase
      */
     public function testAlias()
     {
+        $operation = new Operation(Query::KEYWORD, 'article');
         $query = (new Query('article'))->fields([
             'articleId' => 'id',
             'articleTitle' => 'title',
             'body',
         ]);
-
+        $operation->fields(['article' => $query]);
         $expected =
-            '{
-  article {
+            'query article {
+  article: article {
     articleId: id
     articleTitle: title
     body
   }
 }
 ';
-        $this->assertEquals($expected, (string) $query);
+        $this->assertEquals($expected, (string) $operation);
     }
 
     /**
@@ -109,37 +116,12 @@ class QueryTest extends TestCase
      */
     public function testOperationName()
     {
-        // query with variables but no operation name
-        $query1 = (new Query('article'))
-            ->variables([
-                '$id' => 'Integer',
-            ])
-            ->arguments([
-                'id' => '$id',
-            ])
-            ->fields([
-                'id',
-                'title',
-                'body',
-            ]);
+        $operation = new Operation(Query::KEYWORD, 'articlesQuery');
+        $operation->variables([
+            '$id' => 'Integer',
+        ]);
 
-        $expected1 =
-            'query query_a6fa4442880a206cf86fc5c24e0a384637ab885d($id: Integer) {
-  article(id: $id) {
-    body
-    id
-    title
-  }
-}
-';
-        $this->assertEquals($expected1, (string) $query1);
-
-        // query with variables and operation name
-        $query2 = (new Query('article'))
-            ->operationName('articlesQuery')
-            ->variables([
-                '$id' => 'Integer',
-            ])
+        $query2 = (new Query())
             ->arguments([
                 'id' => '$id',
             ])
@@ -151,15 +133,17 @@ class QueryTest extends TestCase
 
         $expected2 =
             'query articlesQuery($id: Integer) {
-  article(id: $id) {
+  article: article(id: $id) {
     body
     id
     title
   }
 }
 ';
-        $this->assertEquals($expected2, (string) $query2);
+        $operation->fields(['article' => $query2]);
+        $this->assertEquals($expected2, (string) $operation);
 
+        $operation = new Operation(Query::KEYWORD, 'articlesQuery');
         // query with only operation name
         $query3 = (new Query('article'))
             ->operationName('articlesQuery')
@@ -171,14 +155,15 @@ class QueryTest extends TestCase
 
         $expected3 =
             'query articlesQuery {
-  article {
+  article: article {
     body
     id
     title
   }
 }
 ';
-        $this->assertEquals($expected3, (string) $query3);
+        $operation->fields(['article' => $query3]);
+        $this->assertEquals($expected3, (string) $operation);
     }
 
     /**
@@ -186,12 +171,14 @@ class QueryTest extends TestCase
      */
     public function testDirective()
     {
+        $operation = new Operation(Query::KEYWORD, 'articlesQuery');
+        $operation->variables([
+            '$withoutTags' => 'Boolean',
+        ]);
+
         // skip if directive
-        $query1 = (new Query('article'))
-            ->operationName('articlesQuery')
-            ->variables([
-                '$withoutTags' => 'Boolean',
-            ])
+        $query1 = (new Query())
+
             ->fields([
                 'id',
                 'title',
@@ -205,7 +192,7 @@ class QueryTest extends TestCase
 
         $expected1 =
             'query articlesQuery($withoutTags: Boolean) {
-  article {
+  article: article {
     body
     id
     tags @skip(if: $withoutTags)
@@ -213,14 +200,12 @@ class QueryTest extends TestCase
   }
 }
 ';
-        $this->assertEquals($expected1, (string) $query1);
+        $operation->fields(['article' => $query1]);
+        $this->assertEquals($expected1, (string) $operation);
 
         // include if directive
         $query2 = (new Query('article'))
             ->operationName('articlesQuery')
-            ->variables([
-                '$withTags' => 'Boolean!',
-            ])
             ->fields([
                 'id',
                 'title',
@@ -234,7 +219,7 @@ class QueryTest extends TestCase
 
         $expected2 =
             'query articlesQuery($withTags: Boolean!) {
-  article {
+  article: article {
     body
     id
     tags @include(if: $withTags)
@@ -242,99 +227,26 @@ class QueryTest extends TestCase
   }
 }
 ';
-        $this->assertEquals($expected2, (string) $query2);
-    }
-
-    /**
-     * Tests sub query, with directive and alias.
-     */
-    public function testSubqueryWithAlias()
-    {
-        $query = (new Query('article'))
-            ->operationName('articlesQuery')
-            ->variables([
-                '$withTags' => 'Boolean!',
-            ])
-            ->fields([
-                'id',
-                'title',
-                'body',
-                // sub query with type and alias
-                'articleTags' => (new Query('tags'))->fields([
-                    'id',
-                    'tagTitle' => 'title',
-                ]),
-            ])
-            ->includeIf([
-                'articleTags' => '$withTags',
-            ])
-        ;
-
-        $expected =
-            'query articlesQuery($withTags: Boolean!) {
-  article {
-    articleTags: tags @include(if: $withTags) {
-      id
-      tagTitle: title
-    }
-    body
-    id
-    title
-  }
-}
-';
-        $this->assertEquals($expected, (string) $query);
-    }
-
-    public function testSubqueryWithoutAlias()
-    {
-        $query = (new Query('article'))
-            ->operationName('articlesQuery')
-            ->variables([
-                '$withTags' => 'Boolean!',
-            ])
-            ->fields([
-                'id',
-                'title',
-                'body',
-                // sub query without type parameter, so we take the alias
-                'tags' => (new Query())->fields([
-                    'id',
-                    'tagTitle' => 'title',
-                ]),
-            ])
-            ->includeIf([
-                'tags' => '$withTags',
-            ])
-        ;
-
-        $expected =
-            'query articlesQuery($withTags: Boolean!) {
-  article {
-    body
-    id
-    tags @include(if: $withTags) {
-      id
-      tagTitle: title
-    }
-    title
-  }
-}
-';
-        $this->assertEquals($expected, (string) $query);
+        $operation = new Operation(Query::KEYWORD, 'articlesQuery');
+        $operation->variables([
+            '$withTags' => 'Boolean!',
+        ]);
+        $operation->fields(['article' => $query2]);
+        $this->assertEquals($expected2, (string) $operation);
     }
 
     public function testQueryWithFragment()
     {
-        $query = (new Query('article'))
-            ->operationName('articlesQuery')
-            ->fields([
+        $operation = new Operation(Query::KEYWORD, 'articlesQuery');
+        $query = (new Query('article'));
+        $query->operationName('articlesQuery');
+        $query->fields([
                 'id',
                 'title',
                 'body',
                 '...imageFragment',
-            ])
-            ->addFragment(new Fragment('imageFragment', 'image', [
+            ]);
+        $operation->addFragment(new Fragment('imageFragment', 'image', [
                 'height',
                 'width',
                 'filename',
@@ -346,10 +258,10 @@ class QueryTest extends TestCase
                 ]),
             ]))
         ;
-
+        $operation->fields(['article' => $query]);
         $expected =
             'query articlesQuery {
-  article {
+  article: article {
     ...imageFragment
     body
     id
@@ -369,6 +281,6 @@ fragment imageFragment on image {
   width
 }
 ';
-        $this->assertEquals($expected, (string) $query);
+        $this->assertEquals($expected, (string) $operation);
     }
 }
