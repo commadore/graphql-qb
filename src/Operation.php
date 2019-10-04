@@ -99,6 +99,11 @@ class Operation implements OperationInterface
         return $this;
     }
 
+    public function getOperationName(): string
+    {
+        return $this->operationName;
+    }
+    
     /**
      * @param $value
      *
