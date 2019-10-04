@@ -9,4 +9,6 @@ interface OperationInterface extends FieldQueryInterface
     public function variables(array $variables): OperationInterface;
 
     public function addFragment(Fragment $fragment): OperationInterface;
+    
+    public function getOperationName(): string;
 }
