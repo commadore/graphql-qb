@@ -61,11 +61,12 @@ abstract class AbstractQuery implements QueryInterface
     public $fragments = [];
 
     /**
-     * @param null $type
+     * AbstractQuery constructor.
+     * @param string|null $type
      * @param array $args
      * @param array $fields
      */
-    public function __construct($type = null, array $args = [], array $fields = [])
+    public function __construct(?string $type = null, array $args = [], array $fields = [])
     {
         $this->type = $type;
         $this->arguments($args);
