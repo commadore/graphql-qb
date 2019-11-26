@@ -118,6 +118,10 @@ abstract class AbstractQuery implements QueryInterface
             $argValue = var_export($argValue, true);
         }
 
+        if($argValue instanceof Enum) {
+            $argValue = $argValue->value;
+        }
+
         return $argValue;
     }
 

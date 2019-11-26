@@ -2,6 +2,7 @@
 
 namespace Tests\Commadore\GraphQL;
 
+use Commadore\GraphQL\Enum;
 use Commadore\GraphQL\Fragment;
 use Commadore\GraphQL\Operation;
 use Commadore\GraphQL\Query;
@@ -59,6 +60,7 @@ class QueryTest extends TestCase
       $operation = new Operation(Query::KEYWORD, 'article');
       $query1 = new Query('article', [
           'id' => 999,
+          'enum' => new Enum('e'),
           'intValues' => [10, 20],
           'strValues' => ['xxx', 'yyy'],
           'asoc' => [
@@ -77,7 +79,7 @@ class QueryTest extends TestCase
 
       $expected =
           'query article {
-  article: article(asoc: {id: 999, title: "Hello World", note: 3.5, intSubValues: [30, 40], strSubValues: ["aaa", "bbb"]}, id: 999, intValues: [10, 20], strValues: ["xxx", "yyy"]) {
+  article: article(asoc: {id: 999, title: "Hello World", note: 3.5, intSubValues: [30, 40], strSubValues: ["aaa", "bbb"]}, enum: e, id: 999, intValues: [10, 20], strValues: ["xxx", "yyy"]) {
     body
     id
     title
