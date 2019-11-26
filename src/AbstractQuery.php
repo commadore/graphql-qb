@@ -102,6 +102,47 @@ abstract class AbstractQuery implements QueryInterface
         return $this;
     }
 
+    private function isAssocArray(array $arr): bool
+    {
+        if (array() === $arr) return false;
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    private function treatAgrument($argValue): string
+    {
+        if (is_string($argValue) && '$' !== $argValue[0]) {
+            $argValue = sprintf('"%s"', $argValue);
+        }
+
+        if (is_bool($argValue) || is_float($argValue)) {
+            $argValue = var_export($argValue, true);
+        }
+
+        return $argValue;
+    }
+
+    private function printAgrument(string $argName, $argValue): string
+    {
+        if (is_array($argValue)) {
+            if($this->isAssocArray($argValue)) {
+                $values = [];
+                foreach ($argValue as $subArgName => $subArgValue) {
+                    $values[] = $this->printAgrument($subArgName, $subArgValue);
+                }
+                $argValue = sprintf('{ %s }', implode(', ', $values));
+            } else {
+                $values = [];
+                foreach ($argValue as $subValue) {
+                    $values[] = $this->treatAgrument($subValue);
+                }
+                $argValue = sprintf('[%s]', implode(', ', $values));
+            }
+        } else {
+            $argValue = $this->treatAgrument($argValue);
+        }
+
+        return sprintf('%s: %s', $argName, $argValue);
+    }
 
     /**
      * @param array $value
@@ -116,15 +157,7 @@ abstract class AbstractQuery implements QueryInterface
 
         $args = [];
         foreach ($value as $argName => $argValue) {
-            if (is_string($argValue) && '$' !== $argValue[0]) {
-                $argValue = sprintf('"%s"', $argValue);
-            }
-
-            if (is_bool($argValue) || is_float($argValue)) {
-                $argValue = var_export($argValue, true);
-            }
-
-            $args[] = sprintf('%s: %s', $argName, $argValue);
+            $args[] = $this->printAgrument($argName, $argValue);
         }
 
         return sprintf('(%s)', implode(', ', $args));
@@ -173,8 +206,6 @@ abstract class AbstractQuery implements QueryInterface
 
     /**
      * @param array $value
-     * @param array $skipIf
-     * @param array $includeIf
      *
      * @return string
      */
