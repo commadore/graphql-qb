@@ -2,6 +2,7 @@
 
 namespace Tests\Commadore\GraphQL;
 
+use Commadore\GraphQL\Enum;
 use Commadore\GraphQL\Fragment;
 use Commadore\GraphQL\Operation;
 use Commadore\GraphQL\Query;
@@ -52,6 +53,41 @@ class QueryTest extends TestCase
 ';
         $this->assertEquals($expected, (string) $operation);
         $this->assertEquals($expected, (string) $operation2);
+    }
+
+    public function testComplexArguments()
+    {
+      $operation = new Operation(Query::KEYWORD, 'article');
+      $query1 = new Query('article', [
+          'id' => 999,
+          'enum' => new Enum('e'),
+          'intValues' => [10, 20],
+          'strValues' => ['xxx', 'yyy'],
+          'asoc' => [
+              'id' => 999,
+              'title' => 'Hello World',
+              'note' => 3.5,
+              'intSubValues' => [30, 40],
+              'strSubValues' => ['aaa', 'bbb'],
+          ]
+      ], [
+          'id',
+          'title',
+          'body',
+      ]);
+      $operation->fields(['article' => $query1]);
+
+      $expected =
+          'query article {
+  article: article(asoc: {id: 999, title: "Hello World", note: 3.5, intSubValues: [30, 40], strSubValues: ["aaa", "bbb"]}, enum: e, id: 999, intValues: [10, 20], strValues: ["xxx", "yyy"]) {
+    body
+    id
+    title
+  }
+}
+';
+
+      $this->assertEquals($expected, (string) $operation);
     }
 
     /**
@@ -164,6 +200,39 @@ class QueryTest extends TestCase
 ';
         $operation->fields(['article' => $query3]);
         $this->assertEquals($expected3, (string) $operation);
+    }
+
+    public function testComplexArgumentsOperationName()
+    {
+        $operation = new Operation(Query::KEYWORD, 'articlesQuery');
+        $operation->variables([
+            '$id1' => 'Integer',
+            '$id2' => 'Integer',
+        ]);
+
+        $query1 = new Query('article', [
+            'id' => '$id1',
+            'asoc' => [
+                'id' => '$id2',
+            ]
+        ], [
+            'id',
+            'title',
+            'body',
+        ]);
+        $operation->fields(['article' => $query1]);
+
+        $expected =
+            'query articlesQuery($id1: Integer, $id2: Integer) {
+  article: article(asoc: {id: $id2}, id: $id1) {
+    body
+    id
+    title
+  }
+}
+';
+
+        $this->assertEquals($expected, (string) $operation);
     }
 
     /**
