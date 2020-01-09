@@ -254,12 +254,21 @@ abstract class AbstractQuery implements QueryInterface
 
     public function __toString()
     {
+        if(empty($this->fields))
+        {
+            $query = sprintf('%s %s',
+                $this->printType($this->type),
+                $this->printArgs($this->args)
+            );
+        }
+        else
+        {
             $query = sprintf('%s %s { %s }',
                 $this->printType($this->type),
                 $this->printArgs($this->args),
                 $this->printFields($this->fields)
             );
-
+        }
         return $query;
     }
 

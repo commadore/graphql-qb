@@ -319,4 +319,16 @@ fragment imageFragment on image {
        $this->assertEquals($expected, (string) $operation);
     }
 
+    public function testLeafQueryWithArgs()
+    {
+        $operation = new Operation(Query::KEYWORD, 'article');
+        $query = (new Query('article', ['arg1' => 'test'], []));
+        $operation->fields(['article' => $query]);
+        $expected =
+            'query article {
+  article: article(arg1: "test")
+}
+';
+        $this->assertEquals($expected, (string) $operation);
+    }
 }
